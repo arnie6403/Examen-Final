@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Serie II: Envío de Mensajes Protegido</title>
+    <!-- Tailwind CSS para diseño moderno -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-slate-900 flex items-center justify-center min-h-screen text-slate-100 font-sans">
+
+    <div class="bg-slate-800 p-8 rounded-2xl shadow-xl w-full max-w-lg border border-slate-700">
+        <div class="text-center mb-6">
+            <h1 class="text-2xl font-bold text-sky-400">Sala de Mensajes</h1>
+            <p class="text-sm text-slate-400 mt-2">Serie II: Formulario Protegido con Token Bearer</p>
+        </div>
+
+        <!-- Alerta de estado del Token (Validación previa) -->
+        <div id="tokenCheckAlert" class="mb-5 p-3 rounded-lg text-xs font-mono text-center border bg-slate-950 border-slate-700 text-slate-300">
+            Verificando credenciales de la Serie I...
+        </div>
+
+        <!-- Formulario Protegido -->
+        <form id="messageForm" class="space-y-5 hidden">
+            <!-- Campo oculto o visible para el Emisor -->
+            <div>
+                <label for="loginEmisor" class="block text-sm font-medium text-slate-300 mb-1">Usuario Emisor (Login)</label>
+                <input type="text" id="loginEmisor" required autocomplete="username"
+                    placeholder="ej: amarroquinj2" 
+                    class="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-200 transition-all text-sm">
+            </div>
+
+            <!-- Caja de texto para el Mensaje -->
+            <div>
+                <label for="contenido" class="block text-sm font-medium text-slate-300 mb-1">Mensaje a enviar</label>
+                <textarea id="contenido" required rows="4" maxlength="500"
+                    placeholder="Escribe tu mensaje aquí..." 
+                    class="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-200 transition-all resize-none text-sm"></textarea>
+            </div>
+
+            <!-- Contenedor de Alertas de la Petición -->
+            <div id="alertBox" class="hidden text-sm p-3 rounded-lg border"></div>
+
+            <!-- Botón de Envío -->
+            <button type="submit" id="btnSend"
+                class="w-full bg-sky-600 hover:bg-sky-500 text-white font-semibold py-3 px-4 rounded-lg transition-colors shadow-lg shadow-sky-900/20 flex justify-center items-center">
+                <span>Enviar Mensaje Seguro</span>
+            </button>
+        </form>
+
+        <!-- Botón de retorno por si no hay sesión -->
+        <div id="fallbackAction" class="hidden text-center mt-4">
+            <a href="index.html" class="inline-block bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium py-2 px-4 rounded-lg transition-colors">
+                Ir a Iniciar Sesión (Serie I)
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Al cargar la página, verificamos de forma obligatoria el Token de la Serie I
+        const token = localStorage.getItem('bearerToken');
+        const tokenCheckAlert = document.getElementById('tokenCheckAlert');
+        const messageForm = document.getElementById('messageForm');
+        const fallbackAction = document.getElementById('fallbackAction');
+
+        if (!token) {
+            tokenCheckAlert.className = "mb-5 p-3 rounded-lg text-sm text-center border bg-red-950 border-red-500 text-red-200 animate-pulse";
+            tokenCheckAlert.innerText = "❌ ERROR CRÍTICO: No se encontró el Token Bearer. Debes autenticarte primero.";
+            fallbackAction.classList.remove('hidden');
+        } else {
+            tokenCheckAlert.className = "mb-5 p-3 rounded-lg text-xs font-mono text-center border bg-emerald-950 border-emerald-800 text-emerald-400";
+            tokenCheckAlert.innerText = "✓ Token Bearer cargado y listo para usar de forma segura.";
+            messageForm.classList.remove('hidden');
+        }
+
+        // Manejador del envío del formulario
+        messageForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const emisor = document.getElementById('loginEmisor').value.trim();
+            const contenido = document.getElementById('contenido').value.trim();
+            const btnSend = document.getElementById('btnSend');
+            
+            btnSend.disabled = true;
+            btnSend.innerText = "Enviando...";
+            hideAlert();
+
+            const URL_API_MENSAJES = "https://backcvbgtmdesa.azurewebsites.net/api/Mensajes";
+
+            // Estructura exacta del JSON solicitada en la guía
+            const payload = {
+                Cod_Sala: 0,
+                Login_Emisor: emisor,
+                Contenido: contenido
+            };
+
+            try {
+                // Configuración de la petición HTTP basada exactamente en el patrón de la imagen image_f2c9a6.png
+                const response = await fetch(URL_API_MENSAJES, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`, // Inyección del Token crítico
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    showAlert("¡Mensaje enviado con éxito a la API de Mensajes!", "success");
+                    document.getElementById('contenido').value = ""; // Limpiar el input de texto
+                } else if (response.status === 415) {
+                    showAlert("Error 415: Verifique el formato de los datos (Content-Type).", "error");
+                } else if (response.status === 401 || response.status === 403) {
+                    showAlert("Error de Autorización: El token expiró o es inválido.", "error");
+                } else {
+                    showAlert(`Error del Servidor: Estado HTTP ${response.status}`, "error");
+                }
+
+            } catch (error) {
+                console.error("Error en la petición de mensajes:", error);
+                showAlert("Error de red. No se pudo establecer conexión con el servidor protegido.", "error");
+            } finally {
+                btnSend.disabled = false;
+                btnSend.innerText = "Enviar Mensaje Seguro";
+            }
+        });
+
+        // Manejo de alertas UI
+        function showAlert(message, type) {
+            const alertBox = document.getElementById('alertBox');
+            alertBox.innerText = message;
+            alertBox.classList.remove('hidden', 'bg-red-950', 'border-red-500', 'text-red-200', 'bg-emerald-950', 'border-emerald-500', 'text-emerald-200');
+
+            if (type === 'error') {
+                alertBox.classList.add('bg-red-950', 'border-red-500', 'text-red-200');
+            } else {
+                alertBox.classList.add('bg-emerald-950', 'border-emerald-500', 'text-emerald-200');
+            }
+        }
+
+        function hideAlert() {
+            document.getElementById('alertBox').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Serie III - Historial de Mensajes</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f9; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .chat-container { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); width: 100%; max-width: 600px; }
+        h2 { color: #333; text-align: center; border-bottom: 2px solid #0056b3; padding-bottom: 10px; margin-top: 0; }
+        .messages-box { background: #fafafa; border: 1px solid #ddd; border-radius: 6px; height: 400px; overflow-y: auto; padding: 15px; margin-bottom: 15px; display: flex; flex-direction: column; gap: 10px; }
+        .msg-bubble { padding: 10px 14px; border-radius: 15px; max-width: 75%; font-size: 14px; line-height: 1.4; word-wrap: break-word; }
+        .msg-received { background-color: #e9ecef; color: #333; align-self: flex-start; border-bottom-left-radius: 2px; }
+        .msg-meta { font-size: 11px; color: #777; margin-bottom: 4px; font-weight: bold; display: block; }
+        .btn-refresh { width: 100%; padding: 10px; background-color: #0056b3; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; font-weight: bold; }
+        .btn-refresh:hover { background-color: #004494; }
+    </style>
+</head>
+<body>
+
+<div class="chat-container">
+    <h2>Historial del Chat (SQL Server)</h2>
+    
+    <!-- 1. Sección para mostrar los mensajes -->
+    <div id="messagesBox" class="messages-box">
+        <div>Cargando mensajes desde la base de datos...</div>
+    </div>
+    
+    <button class="btn-refresh" onclick="cargarMensajes()">🔄 Actualizar Mensajes</button>
+</div>
+
+<script>
+    async function cargarMensajes() {
+        const messagesBox = document.getElementById('messagesBox');
+        
+        try {
+            // Consumo del puente backend local seguro
+            const response = await fetch('http://localhost:3000/api/mensajes-db');
+            if (!response.ok) throw new Error('Error al obtener los datos.');
+
+            const mensajes = await response.json();
+            messagesBox.innerHTML = ''; // Limpiar contenedor
+
+            if (mensajes.length === 0) {
+                messagesBox.innerHTML = '<div style="text-align:center; color:#999;">No hay mensajes registrados aún.</div>';
+                return;
+            }
+
+            // 3. Renderizado Cronológico (los más recientes aparecen abajo)
+            mensajes.forEach(msg => {
+                const bubble = document.createElement('div');
+                bubble.className = 'msg-bubble msg-received';
+                
+                // Estructura adaptada a las columnas típicas de la tabla Chat_Mensaje
+                // Se asume el uso de propiedades como Login_Emisor/LoginEmisor y Contenido basadas en la Serie II.
+                const emisor = msg.Login_Emisor || msg.LoginEmisor || 'Usuario Anónimo';
+                const texto = msg.Contenido || '';
+                
+                bubble.innerHTML = `
+                    <div class="msg-meta">${emisor}</div>
+                    <div>${texto}</div>
+                `;
+                messagesBox.appendChild(bubble);
+            });
+
+            // Auto-scroll hacia el final para ver el mensaje más nuevo
+            messagesBox.scrollTop = messagesBox.scrollHeight;
+
+        } catch (error) {
+            messagesBox.innerHTML = `<div style="color:red; text-align:center;">⚠️ Error: ${error.message}<br>Asegúrate de que tu servidor backend Node.js esté corriendo.</div>`;
+        }
+    }
+
+    // Carga inicial automatizada al abrir la vista
+    window.onload = cargarMensajes;
+</script>
+
+</body>
+</html>
