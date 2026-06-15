@@ -3,173 +3,221 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat General - UMG</title>
-    <!-- Tailwind CSS para diseño de interfaz tipo aplicación -->
+    <title>Evaluación: Implementación de Chat y Autenticación - UMG</title>
+    <!-- Tailwind CSS para una interfaz unificada de alta fidelidad -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 </head>
-<body class="bg-gray-100 h-screen flex flex-col justify-between font-sans">
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col">
 
-    <!-- Encabezado del Chat -->
-    <header class="bg-green-600 text-white p-4 shadow-md flex justify-between items-center shrink-0">
-        <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 bg-green-800 rounded-full flex items-center justify-center font-bold text-lg">
-                P3
-            </div>
+    <!-- Encabezado Principal de la Asignatura -->
+    <header class="bg-slate-950 border-b border-slate-800 p-4 sticky top-0 z-50 shadow-md">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
-                <h1 class="text-lg font-bold">Sala Pública (Cod_Sala: 0)</h1>
-                <p id="tokenStatus" class="text-xs text-green-200">Verificando conexión...</p>
+                <h1 class="text-xl font-bold text-emerald-400">Examen Final: Desarrollo Web</h1>
+                <p class="text-xs text-slate-400">Punteo Total: 35 Pts (Serie I: 5, Serie II: 10, Serie III: 10, Serie IV: 10)</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <span id="globalTokenBadge" class="bg-red-950 text-red-400 border border-red-800 text-xs px-3 py-1.5 rounded-full font-mono">
+                    ● Sin Sesión (Serie I Requerida)
+                </span>
             </div>
         </div>
-        <button onclick="cerrarSesion()" class="bg-green-700 hover:bg-green-800 text-white text-xs py-1 px-3 rounded transition">
-            Salir
-        </button>
     </header>
 
-    <!-- Contenedor Principal de Mensajes -->
-    <main id="chatContainer" class="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50">
-        <div class="text-center text-gray-500 text-sm py-4 animate-pulse">Cargando mensajes...</div>
+    <!-- Contenedor Principal en Grid -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- COLUMNA IZQUIERDA: Controles del Cliente (Serie I y Serie II) (4 Columnas) -->
+        <div class="lg:col-span-4 space-y-6">
+            
+            <!-- SECCIÓN SERIE I: Autenticación -->
+            <section class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-lg">
+                <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
+                    <span class="bg-emerald-500/10 text-emerald-400 w-5 h-5 rounded flex items-center justify-center text-xs">I</span>
+                    Serie I: Autenticación
+                </h2>
+                <form id="loginForm" class="space-y-3">
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Usuario (sin @miumg.edu.gt)</label>
+                        <input type="text" id="username" required placeholder="ej: oaranam3" 
+                            class="w-full text-sm px-3 py-2 bg-slate-950 border border-slate-700 rounded focus:outline-none focus:ring-1 focus:ring-emerald-500 text-slate-200">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Contraseña</label>
+                        <input type="password" id="password" required value="123456a"
+                            class="w-full text-sm px-3 py-2 bg-slate-950 border border-slate-700 rounded focus:outline-none focus:ring-1 focus:ring-emerald-500 text-slate-200">
+                    </div>
+                    <button type="submit" id="btnLogin" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium py-2 rounded transition-colors">
+                        Obtener Token Bearer
+                    </button>
+                </form>
+            </section>
+
+            <!-- SECCIÓN SERIE II: Envío de Mensajes (Protegido) -->
+            <section class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-lg opacity-50 pointer-events-none transition-all duration-300" id="wrapperSerieII">
+                <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
+                    <span class="bg-sky-500/10 text-sky-400 w-5 h-5 rounded flex items-center justify-center text-xs">II</span>
+                    Serie II: Formulario Protegido
+                </h2>
+                <form id="messageForm" class="space-y-3">
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Login Emisor</label>
+                        <input type="text" id="loginEmisor" readonly class="w-full text-sm px-3 py-2 bg-slate-900 border border-slate-700 rounded text-slate-400 cursor-not-allowed">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Contenido del Mensaje</label>
+                        <textarea id="contenido" required rows="3" placeholder="Escribe un mensaje seguro..." 
+                            class="w-full text-sm px-3 py-2 bg-slate-950 border border-slate-700 rounded focus:outline-none focus:ring-1 focus:ring-sky-500 text-slate-200 resize-none"></textarea>
+                    </div>
+                    <button type="submit" id="btnSend" class="w-full bg-sky-600 hover:bg-sky-500 text-white text-xs font-medium py-2 rounded transition-colors">
+                        Enviar Mensaje (POST)
+                    </button>
+                </form>
+                <div id="apiAlert" class="mt-2 hidden text-xs p-2 rounded border font-mono"></div>
+            </section>
+        </div>
+
+        <!-- COLUMNA DERECHA: Visualización e Integración Externa (Serie III y Link Solicitado) (8 Columnas) -->
+        <div class="lg:col-span-8 flex flex-col space-y-6">
+            
+            <!-- CONTENEDOR DEL LINK SOLICITADO: Vista en tiempo real del Servidor de Pruebas -->
+            <section class="bg-slate-800 rounded-xl border border-slate-700 shadow-lg overflow-hidden flex flex-col flex-1 min-h-[450px]">
+                <div class="bg-slate-950 px-4 py-3 border-b border-slate-800 flex justify-between items-center">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+                        <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-300">
+                            Plataforma de Producción / Visualización Externa (Serie III Link)
+                        </h2>
+                    </div>
+                    <a href="https://chatumg-examen-rspro.azurewebsites.net/" target="_blank" class="text-xs text-indigo-400 hover:underline flex items-center gap-1">
+                        Abrir pestaña externa ↗
+                    </a>
+                </div>
+                
+                <!-- Inyección del Link mediante Iframe para interactuar en caliente -->
+                <div class="flex-1 bg-slate-950 relative">
+                    <iframe 
+                        src="https://chatumg-examen-rspro.azurewebsites.net/" 
+                        class="absolute inset-0 w-full h-full border-0 bg-white rounded-b-xl"
+                        title="Chat UMG Azure App">
+                    </iframe>
+                </div>
+            </section>
+
+            <!-- NOTA ACADÉMICA SOBRE SERIE III (SQL Server Connection) -->
+            <section class="bg-slate-950 p-4 rounded-xl border border-amber-500/20 text-xs text-amber-300/90 leading-relaxed font-mono">
+                <p class="font-bold text-amber-400 mb-1">⚠️ Criterio de Arquitectura para la Serie III:</p>
+                Recuerda que para obtener la nota completa de la Serie III, debido a que las credenciales de SQL Server (<code class="bg-slate-900 px-1 text-white">svr-sql-ctezo</code>) no se deben exponer en el navegador, debes mapear estos datos mediante un Backend local (Node.js/Express, .NET Core, o Python) que haga el Query a la tabla <code class="bg-slate-900 px-1 text-white">[dbo].[Chat_Mensaje]</code> y exponga un endpoint local para consumirlo de forma cronológica. El iframe de arriba renderiza los cambios que impactes en la base de datos.
+            </section>
+        </div>
     </main>
 
-    <!-- Formulario Inferior para Enviar Mensaje -->
-    <footer class="bg-white border-t p-4 shrink-0 shadow-lg">
-        <form id="messageForm" class="flex items-center space-x-2 max-w-5xl mx-auto">
-            <input type="text" id="loginEmisor" required placeholder="Tu usuario" 
-                   class="w-32 px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
-            
-            <input type="text" id="contenido" required autocomplete="off"
-                   placeholder="Escribe un mensaje aquí..." 
-                   class="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
-            
-            <button type="submit" id="btnEnviar"
-                    class="bg-green-600 text-white px-5 py-2 rounded-md hover:bg-green-700 transition font-medium disabled:bg-gray-400">
-                Enviar
-            </button>
-        </form>
-    </footer>
-
     <script>
-        // CONFIGURACIÓN DUAL DE URLs
-        const URL_GET = 'https://examenfinalprogra319328.azurewebsites.net/api/mensajes'; // Para LEER el historial
-        const URL_POST = 'https://backcvbgtmdesa.azurewebsites.net/api/Mensajes';        // Para ENVIAR (Oficial examen)
+        // --- CONSTANTES DE ENDPOINTS ---
+        const URL_LOGIN = "https://backcvbgtmdesa.azurewebsites.net/api/login/authenticate";
+        const URL_MENSAJES = "https://backcvbgtmdesa.azurewebsites.net/api/Mensajes";
 
-        const accessToken = localStorage.getItem('bearerToken');
-        const chatContainer = document.getElementById('chatContainer');
-        const tokenStatus = document.getElementById('tokenStatus');
-        const btnEnviar = document.getElementById('btnEnviar');
+        // --- MANEJO DE ESTADO DE SESIÓN (SERIE I) ---
+        const loginForm = document.getElementById('loginForm');
+        const wrapperSerieII = document.getElementById('wrapperSerieII');
+        const globalTokenBadge = document.getElementById('globalTokenBadge');
+        const loginEmisorInput = document.getElementById('loginEmisor');
 
-        if (!accessToken) {
-            alert("⚠️ Acceso denegado. Debes iniciar sesión en la Serie I.");
-            window.location.href = 'index.html';
-        } else {
-            tokenStatus.textContent = "Conectado de forma segura con Token Bearer";
-            cargarMensajes();
-            setInterval(cargarMensajes, 5000); // Actualiza el chat cada 5 segundos
-        }
-
-        // --- OBTENER MENSAJES (GET) ---
-        async function cargarMensajes() {
-            try {
-                // Hacemos el GET a la URL que sí soporta listado de mensajes
-                const response = await fetch(URL_GET, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${accessToken}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                
-                const mensajes = await response.json();
-                chatContainer.innerHTML = '';
-
-                // Filtrar para mostrar la sala pública 0
-                const mensajesFiltrados = mensajes.filter(m => m.Cod_Sala === 0);
-
-                if (mensajesFiltrados.length === 0) {
-                    chatContainer.innerHTML = `<div class="text-center text-gray-400 py-4">No hay mensajes en esta sala todavía.</div>`;
-                    return;
-                }
-
-                mensajesFiltrados.forEach(msg => {
-                    const messageWrapper = document.createElement('div');
-                    messageWrapper.className = "flex flex-col max-w-xs md:max-w-md p-3 rounded-lg shadow-xs bg-white border border-gray-100 text-gray-800 self-start";
-                    
-                    const fecha = new Date(msg.Fecha_Envio);
-                    const horaFormateada = fecha.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-                    messageWrapper.innerHTML = `
-                        <span class="text-xs font-bold text-green-700 mb-1">${msg.Login_Emisor}</span>
-                        <p class="text-sm break-words whitespace-pre-wrap">${escapeHTML(msg.Contenido)}</p>
-                        <span class="text-[10px] text-gray-400 text-right mt-1 w-full">${horaFormateada}</span>
-                    `;
-                    
-                    chatContainer.appendChild(messageWrapper);
-                });
-
-                chatContainer.scrollTop = chatContainer.scrollHeight;
-
-            } catch (error) {
-                console.error("Error al cargar mensajes:", error);
-                tokenStatus.textContent = "❌ Error al actualizar el historial de chat.";
-                tokenStatus.className = "text-xs text-red-200";
-            }
-        }
-
-        // --- ENVIAR MENSAJE (POST) ---
-        document.getElementById('messageForm').addEventListener('submit', async (e) => {
+        loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            const usernameInput = document.getElementById('username').value.trim();
+            const passwordInput = document.getElementById('password').value;
+            const btnLogin = document.getElementById('btnLogin');
 
-            const loginEmisor = document.getElementById('loginEmisor').value.trim();
-            const contenidoInput = document.getElementById('contenido');
-            const contenido = contenidoInput.value.trim();
+            let cleanUsername = usernameInput.includes('@') ? usernameInput.split('@')[0] : usernameInput;
 
-            if (!contenido || !loginEmisor) return;
-
-            btnEnviar.disabled = true;
-
-            const payload = {
-                Cod_Sala: 0,
-                Login_Emisor: loginEmisor,
-                Contenido: contenido
-            };
+            btnLogin.disabled = true;
+            btnLogin.innerText = "Autenticando...";
 
             try {
-                // El POST se envía a la URL oficial solicitada en tus instrucciones
-                const response = await fetch(URL_POST, {
+                const response = await fetch(URL_LOGIN, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${accessToken}`
-                    },
-                    body: JSON.stringify(payload)
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ Username: cleanUsername, Password: passwordInput })
                 });
+
+                const data = await response.json();
 
                 if (response.ok) {
-                    contenidoInput.value = '';
-                    // Esperar un momento pequeño y recargar el visor
-                    setTimeout(cargarMensajes, 500);
+                    const token = data.token || data.tokenBearer || data;
+                    if (token) {
+                        // Persistencia obligatoria de Serie I
+                        localStorage.setItem('bearerToken', token);
+                        localStorage.setItem('activeUser', cleanUsername);
+                        
+                        // Mutación visual del estado del DOM
+                        globalTokenBadge.className = "bg-emerald-950 text-emerald-400 border border-emerald-800 text-xs px-3 py-1.5 rounded-full font-mono";
+                        globalTokenBadge.innerText = `● Token Bearer Activo: ${cleanUsername}`;
+                        
+                        // Desbloquear Serie II
+                        wrapperSerieII.classList.remove('opacity-50', 'pointer-events-none');
+                        loginEmisorInput.value = cleanUsername;
+                        
+                        alert("Serie I Completada: Token almacenado con éxito.");
+                    }
                 } else {
-                    alert(`Error ${response.status}: No se pudo entregar el mensaje al servidor del examen.`);
+                    alert("Error de autenticación: " + (data.message || "Credenciales inválidas"));
                 }
-            } catch (error) {
-                console.error("Error al enviar:", error);
-                alert("Error de red al intentar enviar.");
+            } catch (err) {
+                console.error(err);
+                alert("Error de conexión al autenticar.");
             } finally {
-                btnEnviar.disabled = false;
+                btnLogin.disabled = false;
+                btnLogin.innerText = "Obtener Token Bearer";
             }
         });
 
-        function escapeHTML(str) {
-            return str.replace(/[&<>'"]/g, 
-                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
-            );
-        }
+        // --- ENVÍO DE MENSAJES (SERIE II) ---
+        const messageForm = document.getElementById('messageForm');
+        const apiAlert = document.getElementById('apiAlert');
 
-        function cerrarSesion() {
-            localStorage.removeItem('bearerToken');
-            window.location.href = 'index.html';
-        }
+        messageForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btnSend = document.getElementById('btnSend');
+            const contenido = document.getElementById('contenido').value.trim();
+            const savedToken = localStorage.getItem('bearerToken');
+            const savedUser = localStorage.getItem('activeUser');
+
+            btnSend.disabled = true;
+            btnSend.innerText = "Enviando via POST...";
+            apiAlert.classList.add('hidden');
+
+            try {
+                const response = await fetch(URL_MENSAJES, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${savedToken}`, // Requisito crítico de seguridad
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        Cod_Sala: 0,
+                        Login_Emisor: savedUser,
+                        Contenido: contenido
+                    })
+                });
+
+                if (response.ok) {
+                    apiAlert.className = "mt-2 block text-xs p-2 rounded border font-mono bg-emerald-950 border-emerald-700 text-emerald-300";
+                    apiAlert.innerText = "✓ Mensaje enviado. El servidor procesó el Bearer Token correctamente.";
+                    document.getElementById('contenido').value = "";
+                } else {
+                    apiAlert.className = "mt-2 block text-xs p-2 rounded border font-mono bg-red-950 border-red-700 text-red-300";
+                    apiAlert.innerText = `✕ Error HTTP ${response.status}: Intento denegado o token inválido.`;
+                }
+            } catch (err) {
+                console.error(err);
+                apiAlert.className = "mt-2 block text-xs p-2 rounded border font-mono bg-amber-950 border-amber-700 text-amber-300";
+                apiAlert.innerText = "✕ Error de Red: Servidor fuera de alcance.";
+            } finally {
+                btnSend.disabled = false;
+                btnSend.innerText = "Enviar Mensaje (POST)";
+            }
+        });
     </script>
 </body>
 </html>
